@@ -50,7 +50,17 @@ module Teaspoon
         log_line("Failures:\n")
         failures.each_with_index do |failure, index|
           log_line("  #{index + 1}) #{failure.description}")
-          log_line("     Failure/Error: #{failure.message}\n", RED)
+          log_line("     Failure/Error: #{failure.message}", RED)
+
+          failure.trace.split("\n").map do |line|
+            if (line.match(/mocha/) ||
+                line.match(/chai/))
+              log_line('       in ' + make_readable(line))
+            else
+              log_line('       in ' + make_readable(line), YELLOW)
+            end
+          end
+          log_line
         end
       end
 
@@ -72,6 +82,16 @@ module Teaspoon
 
       def stats_color
         failures.size > 0 ? RED : pendings.size > 0 ? YELLOW : GREEN
+      end
+
+      private
+
+      def make_readable(line)
+        line.sub(/http:\/\/(\d+\.){3}\d+:\d+\//, '')
+          .sub(/\.self/, '')
+          .sub(/-[0-9a-f]+/, '')
+          .sub(/\?body=1\?body=\d+/, '')
+          .sub(/:\d+$/, '')
       end
     end
   end
